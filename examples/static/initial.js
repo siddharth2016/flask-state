@@ -247,8 +247,13 @@ class MachineStatus {
             url: '/v0/state/hoststatus',
             data: {'timeQuantum': days},
             success: response => {
+                if (response.code !== 200) {
+                    return;
+                }
+
                 const fields = ["ts", "cpu", "memory", "load_avg", "disk_usage"];
                 const data = response.data;
+
                 data.items = data.items.map(item => {
                     let element = {};
                     fields.forEach((field, index) => {
@@ -564,19 +569,17 @@ class Ajax {
             xhr.onreadystatechange = () => {
                 // readyState: 0: init, 1: connect has set up, 2: receive request, 3: request.. , 4: request end, send response
                 if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        // status: 200: OK,  404: Not Found Page
-                        if (opt.dataType === 'json') {
-                            const data = JSON.parse(xhr.responseText);
-                            resolve(data);
-                            if (opt.success !== null) {
-                                opt.success(data);
-                            } else {
-                                reject(new Error(String(xhr.status) || 'No callback function.'));
-                            }
+                    // status: 200: OK,  401: Verification Failed, 404: Not Found Page
+                    if (opt.dataType === 'json') {
+                        const data = JSON.parse(xhr.responseText);
+                        resolve(data);
+                        if (opt.success !== null) {
+                            opt.success(data);
+                        } else {
+                            reject(new Error(String(xhr.status) || 'No callback function.'));
                         }
                     } else {
-                        reject(new Error(String(xhr.status) || 'Server is fail.'));
+                        reject(new Error(String(xhr.status) || 'Error data type.'));
                     }
                 }
             };
